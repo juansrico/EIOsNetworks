@@ -1,0 +1,19 @@
+DATA EXTRACTION YIO (07.02.2023)
+
+1. Extract data from the online repository of the YIO
+- Search criteria Yearbook:
+  -> Environment & conservation (two extractions). Categories: type I-> A,B,C,D,F. Type II (exclude): C,D,E,J
+  -> Extraction led to 612 results
+  
+2. Scrape the all individual pages of each organization using Bardeen and merge
+- Scrape country memberships & aims
+
+3. Eliminate organizations that do not fit 
+- Criteria:
+ -> First layer: Common sense
+ -> Second layer:
+ -> Third layer: 
+
+Next steps:
+- Decide criteria and filter
+- Scrape country memberships from the column "all"
