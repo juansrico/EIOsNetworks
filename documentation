@@ -14,6 +14,8 @@ DATA EXTRACTION YIO (07.02.2023)
  -> Second layer:
  -> Third layer: 
 
+Current number of organization (13.02.2023): 364
+
 Next steps:
 - Decide criteria and filter
 - Scrape country memberships from the column "all"
