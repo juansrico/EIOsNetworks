@@ -1,6 +1,6 @@
 # Data cleaning
 import pandas as pd
-url = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\Fulldata1.csv"
+url = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\Fulldata current.csv"
 data = pd.read_csv(url)
 Headers = ["Organisation", "members", "headquarters", "all", "timestamp"]
 data.columns = Headers
