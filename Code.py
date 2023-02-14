@@ -21,3 +21,25 @@ print(data["aims"])
 
 # Save to CSV
 data.to_csv("sample_df.csv", index=False)
+
+
+# Extract member countries from the column "all"
+import re
+def extract_members(text):
+    match = re.search("Member Countries.*?(?=Type)", text, re.DOTALL)
+    if match:
+        members = match.group()
+        members = re.sub("Member Countries\n", "", members)
+        members = members.strip()
+        return members
+    else:
+        return None
+
+data['members'] = data['all'].apply(extract_members)
+print(data["members"])
+
+# Clean the new column "members" by replacing useless words with empty spaces
+data['members'] = data['all'].apply(extract_members)
+data['members'] = data['members'].str.replace('Member Countries & Regions', '')
+
+data.to_csv("Fulldata Current2", index=False)
