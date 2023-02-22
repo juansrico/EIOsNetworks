@@ -1,9 +1,10 @@
 # Data cleaning
 import pandas as pd
-url = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\Fulldata current.csv"
+url = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\Original Data.csv"
 data = pd.read_csv(url)
 Headers = ["Organisation", "members", "headquarters", "all", "timestamp"]
 data.columns = Headers
+
 
 # Extract aims from the column "all"
 import re
@@ -19,9 +20,15 @@ def extract_aims(text):
 data['aims'] = data['all'].apply(extract_aims)
 print(data["aims"])
 
-# Save to CSV
-data.to_csv("sample_df.csv", index=False)
+# Eliminate empty spaces in the column "organisation"
 
+# define lambda function to eliminate extra spaces
+remove_extra_spaces = lambda x: ' '.join(x.split())
+
+# apply lambda function to column
+data['Organisation'] = data['Organisation'].apply(remove_extra_spaces)
+# See results
+print(data["Organisation"])
 
 # Extract member countries from the column "all"
 import re
@@ -42,9 +49,6 @@ print(data["members"])
 data['members'] = data['all'].apply(extract_members)
 data['members'] = data['members'].str.replace('Member Countries & Regions', '')
 
-data.to_csv("Fulldata Current2", index=False)
-
-
 # Create a column to differentiate IOs from INGOs
 def contains_specific_words(text):
     if ("Type II Classificationg: intergovernmental organization" in text) or ("Type II Classificationg" in text):
@@ -54,8 +58,13 @@ def contains_specific_words(text):
 
 data['IO'] = data['all'].apply(contains_specific_words)
 print(data["IO"].head(50))
-data.to_csv("Fulldata Current3", index=False)   # The data was saved in a new document
+
+# Move column "aims" to the second position and shift all other columns to the right
+cols = data.columns.tolist()
+cols = cols[:1] + [cols[5]] + cols[1:5] + cols[6:]
+data = data[cols]
 
 
-
+# Save to CSV
+data.to_csv("DataProcessing1", index=False)
 
