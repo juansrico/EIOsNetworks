@@ -7,15 +7,15 @@ DATA EXTRACTION YIO (07.02.2023)
   
 2. Scrape the all individual pages of each organization using Bardeen and merge
 - Scrape country memberships & aims
+- Scrape country memberships from the column "all"
 
 3. Eliminate organizations that do not fit 
 - Criteria:
  -> First layer: Common sense
- -> Second layer:
+ -> Second layer: No data in "members"
  -> Third layer: 
 
 Current number of organization (13.02.2023): 364
 
-Next steps:
-- Decide criteria and filter
-- Scrape country memberships from the column "all"
+Current number of organizations (22.02.2023):
+
