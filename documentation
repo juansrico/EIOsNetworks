@@ -10,14 +10,16 @@ DATA EXTRACTION YIO (07.02.2023)
 - Scrape country memberships from the column "all"
 - Create column to differentiate among IOs and INGOs
 - Clean the columns and re-organize them
+- Dataprocessing4 and Dataprocessing5 have both 147 orgas. In number 5, I deleted special kinds of memberships and just left the countries' names (even if they are associate or similar)
 
 3. Eliminate organizations that do not fit 
 - Criteria:
  -> First layer: Common sense
  -> Second layer: No data in "members"
- -> Third layer: 
-
+ -> Third layer: Read aims and include only orgas working in the environmental field
+ -> Fourth layer:
+ 
 Current number of organization (13.02.2023): 364
 
-Current number of organizations (22.02.2023):
+Current number of organizations (07.03.2023): 147
 
