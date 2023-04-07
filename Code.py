@@ -74,13 +74,16 @@ data.to_csv("DataProcessing1", index=False)
 ### Create matrix for the network analysis
 
 # Before that: delete double listings of the same country in a specific space: 
+# Define a function to remove repeated words within a string
+def remove_duplicates(row):
+    words = row.split(', ')
+    return ', '.join(sorted(set(words), key=words.index))
 
+# Apply the function to the members column
+df['members'] = df['members'].apply(remove_duplicates)
 
-# Assuming your DataFrame is called 'df' and 'members' is the column with countries separated by commas
-df['members'] = df['members'].apply(lambda x: ', '.join(sorted(set(x.split(', ')))))
-
-df.to_csv("DataProcessing6", index=False)
-
+# Display the resulting dataframe
+print(df["members"])
 
 
 ##Create matrix
