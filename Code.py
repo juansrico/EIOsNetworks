@@ -151,4 +151,22 @@ for i in range(num_nodes):
 print(nx.info(G))  # Get basic info about the network
 
 
+# Calculate network-wide metrics
+num_nodes = nx.number_of_nodes(G)
+num_edges = nx.number_of_edges(G)
+density = nx.density(G)
+avg_clustering_coef = nx.average_clustering(G)
+avg_shortest_path_len = nx.average_shortest_path_length(G)
+degree_centralities = nx.degree_centrality(G)
+closeness_centralities = nx.closeness_centrality(G)
+betweenness_centralities = nx.betweenness_centrality(G)
 
+# Print the metrics
+print("Number of nodes:", num_nodes)
+print("Number of edges:", num_edges)
+print("Density:", density)
+print("Average clustering coefficient:", avg_clustering_coef)
+print("Average shortest path length:", avg_shortest_path_len)
+print("Degree centralities:", degree_centralities)
+print("Closeness centralities:", closeness_centralities)
+print("Betweenness centralities:", betweenness_centralities)
