@@ -90,6 +90,14 @@ All those deleted case were listed in the document "deleted organizations".
 Deleted words such as "individuals in xxx countries" and included all countries listed, independent of whether it said "partner organizations in xxx countries" 
 or something similar
 
+3 - Delete all non-sovereign countries listed:
+Anguilla, St Eustatius, Faeroe Is, Macau, Montserrat, St Helena, Gibraltar, Virgin Is USA, Samoa USA, Norfolk Is, St Maarten, Cayman Is, New Caledonia, Northern Mariana Is, Virgin Is UK  Neth Antilles (dissolved!)
+
+4- Replace all cities listed with the countries’ name:
+Aguadilla & Mayagüez: Puerto Rico
+Dar es Salaam: Tanzania
+
+5- Save document as "xxx".
 
 """
 
