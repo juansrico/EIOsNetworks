@@ -83,7 +83,7 @@ data.to_csv("DataProcessing1", index=False)
 ########### 3- Manual selection ###############
 """
 1 - Delete organizations whose aims are not related to environmental protection or fight against climate change, or that do not have membership data: 
-All those deleted case were listed in the document "deleted organizations".
+All those deleted case were listed in the document "deleted organizations final".
 (QUESTION: What is the sheet "orgas with unfitting goals" (col) doing?
 
 2- Clean the column memberships: 
