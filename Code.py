@@ -137,6 +137,9 @@ dd.to_csv('mydata.csv', index=True)
 ######## START THE ANALYSIS ############## 
 # This procedure takes the file "mydata.csv" (edgelist format) and makes a network out of it.
 
+## > ask to chat gpt: I wanna generate several output according different dataset (only the name of the dataset is changing, not the model), should I do apply a loop to the following code with these files names: 
+
+
 # Load the data
 with open(r'C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\mydata.csv', 'r') as f:
     reader = csv.reader(f)
