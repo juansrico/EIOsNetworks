@@ -135,78 +135,56 @@ dd.to_csv('mydata.csv', index=True)
 
 
 ######## START THE ANALYSIS ############## 
-# This procedure takes the file "mydata.csv" (edgelist format) and makes a network out of it.
+# This procedure takes the file "xxx.csv" (edgelist format) and makes a network out of it.
 
-## > ask to chat gpt: I wanna generate several output according different dataset (only the name of the dataset is changing, not the model), should I do apply a loop to the following code with these files names: 
+#import csv
+import numpy as np
+import networkx as nx
+import pandas as pd
 
+# Step 1: Load the data and create an undirected network
+file_path = 'C:/Users/ricoe/OneDrive/Documents/WZB/PAPER/FINAL DATASETS/Archive/Matrix network Final _ Scotland and Tanzania2 deleted.csv'
+df = pd.read_csv(file_path, sep=';')
+node_names = df.columns[1:].tolist()
+weighted_matrix = df.iloc[:, 1:].to_numpy()
 
-# Load the data
-with open(r'C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\mydata.csv', 'r') as f:
-    reader = csv.reader(f)
-    node_names = next(reader)[1:]  # extract the node names from the first row
-    weighted_matrix = np.array([[float(x) for x in row[1:]] for row in reader])
-
-# Create the graph (network)
 G = nx.Graph()
-
-# Add nodes to the graph
-num_nodes = len(node_names)
-G.add_nodes_from(node_names)
-
-# Add weighted edges to the graph
-for i in range(num_nodes):
-    for j in range(num_nodes):
-        weight = weighted_matrix[i][j]
+for i, node in enumerate(node_names):
+    for j in range(i+1, len(node_names)):
+        weight = weighted_matrix[i, j]
         if weight != 0:
             G.add_edge(node_names[i], node_names[j], weight=weight)
 
-# Print network metrics with explanations
+# Step 2: Print network metrics
+num_nodes = G.number_of_nodes()
+num_edges = G.number_of_edges()
+density = nx.density(G)
+avg_clustering_coef = nx.average_clustering(G)
+avg_shortest_path_len = nx.average_shortest_path_length(G) if nx.is_connected(G) else "N/A (Graph is not connected)"
+
 print("Network metrics:")
-print("Number of nodes:", num_nodes, "(The total number of nodes in the network)")
-print("Number of edges:", num_edges, "(The total number of edges in the network)")
-print("Network density:", density, "(A measure of how dense the network is, ranging from 0 to 1)")
-print("Average clustering coefficient:", avg_clustering_coef, "(The average local clustering coefficient of the nodes)")
-print("Average shortest path length:", avg_shortest_path_len, "(The average shortest path length between all pairs of nodes)")
+print(f"Number of nodes: {num_nodes} (The total number of nodes in the network)")
+print(f"Number of edges: {num_edges} (The total number of edges in the network)")
+print(f"Network density: {density} (A measure of how dense the network is, ranging from 0 to 1)")
+print(f"Average clustering coefficient: {avg_clustering_coef} (The average local clustering coefficient of the nodes)")
+print(f"Average shortest path length: {avg_shortest_path_len} (The average shortest path length between all pairs of nodes)")
 
+# Step 3: Calculate individual centrality measures
+centrality_measures = {
+    'Node': node_names,
+    'Degree Centrality': [nx.degree_centrality(G)[node] for node in node_names],
+    'Closeness Centrality': [nx.closeness_centrality(G)[node] for node in node_names],
+    'Betweenness Centrality': [nx.betweenness_centrality(G)[node] for node in node_names],
+    'Eigenvector Centrality': [nx.eigenvector_centrality(G, max_iter=1000)[node] for node in node_names],
+    'Clustering Coefficient': [nx.clustering(G)[node] for node in node_names]
+}
 
-## Calculate individual centrality measures
-import csv
-import networkx as nx
+# Step 4: Save the centrality measures to a CSV file
+output_file_path = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\Metrics network analysis FINAL FINAAAAAl.csv"  # Adjust the file path as needed
+centrality_df = pd.DataFrame(centrality_measures)
+centrality_df.to_csv(output_file_path, index=False)
 
-# Calculate centrality measures
-degree_centralities = nx.degree_centrality(G)  # Fraction of nodes the node is connected to (how popular a country is)
-closeness_centralities = nx.closeness_centrality(G)  # How close a country is to all other countries in the network (how quickly information spreads)
-betweenness_centralities = nx.betweenness_centrality(G)  # How often a country acts as a bridge along the shortest path between two other countries (how influential a country is in connecting others)
-eigenvector_centralities = nx.eigenvector_centrality(G)  # A measure of the influence of a country in the network (how well-connected a country is to other well-connected countries)
-clustering_coefficients = nx.clustering(G)  # How connected a country's neighbors are to each other (how tightly knit a country's connections are)
-
-# Prepare data for the CSV file
-rows = []
-for node in G.nodes():
-    row = [
-        node,
-        degree_centralities[node],
-        closeness_centralities[node],
-        betweenness_centralities[node],
-        eigenvector_centralities[node],
-        clustering_coefficients[node]
-    ]
-    rows.append(row)
-
-# Define the CSV file path
-csv_file_path = r'C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\metrics Final.csv'
-
-# Write data to the CSV file
-with open(csv_file_path, 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    headers = ["Node", "Degree Centrality (Popularity)", "Closeness Centrality (Closeness to Others)",
-               "Betweenness Centrality (Influence in Connecting Others)",
-               "Eigenvector Centrality (Influence in the Network)",
-               "Clustering Coefficient (Tightness of Connections)"]
-    writer.writerow(headers)
-    writer.writerows(rows)
-
-print("CSV file exported successfully!")
+print("Centrality measures saved to:", output_file_path)
 
 
 # (Optional) # Create correlation matrix and heatmap for facilitating the interpretation 
