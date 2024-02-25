@@ -276,3 +276,53 @@ nx.draw_networkx(G_filtered, pos=pos, with_labels=True, node_color=node_colors, 
 
 # Save the network visualization to a file
 plt.savefig(r'C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\network_visualization2.jpg')
+
+
+
+
+
+
+-----------------------------------------------------------
+### CREATING CLIMATE AMBITION INDEX ##########
+
+import pandas as pd
+
+# Replace 'your_file_path.csv' with the path to your dataset
+file_path = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\Climate Ambition Index\Climate Ambition Scores.csv"
+
+# Load the dataset
+df = pd.read_csv(file_path)
+
+# Function to calculate the 'endgoal' component of the index
+def calculate_endgoal(row):
+    return (row['end_target'] * 0.30 + row['end_target_year'] * 0.30 + row['end_target_status'] * 0.40) * 0.40
+
+# Function to calculate the 'interim' component of the index
+def calculate_interim(row):
+    return (row['interim_target'] * 0.40 + row['interim_target_percentage_reduction'] * 0.60) * 0.40
+
+# Calculate the 'endgoal' component for all rows
+df['endgoal'] = df.apply(calculate_endgoal, axis=1)
+
+# Calculate the 'interim' component for all rows
+df['interim'] = df.apply(calculate_interim, axis=1)
+
+# Calculate the 'transparency' component for all rows
+df['transparency'] = df['reporting_mechanism'] * 0.20
+
+# Sum the components to get the final climate ambition index
+df['climate_ambition_index'] = df['endgoal'] + df['interim'] + df['transparency']
+
+# Normalize the climate ambition index
+min_score = df['climate_ambition_index'].min()
+max_score = df['climate_ambition_index'].max()
+df['normalized_climate_ambition_index'] = (df['climate_ambition_index'] - min_score) / (max_score - min_score)
+
+# Optionally, drop the intermediate calculation columns
+df.drop(['endgoal', 'interim', 'transparency'], axis=1, inplace=True)
+
+# Save the updated DataFrame to a new CSV file
+# Replace 'updated_file_path.csv' with your desired output file path
+output_file_path = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\THIS IS.csv"
+df.to_csv(output_file_path, index=False)
+
