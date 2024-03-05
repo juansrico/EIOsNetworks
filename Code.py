@@ -326,3 +326,484 @@ df.drop(['endgoal', 'interim', 'transparency'], axis=1, inplace=True)
 output_file_path = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\THIS IS.csv"
 df.to_csv(output_file_path, index=False)
 
+
+-----------------------------
+### CREATING THE NETWORK GRAPHS (this one exemplary for world regions)
+
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Adjust the file path as necessary for your environment
+file_path = "/content/Network Matrix Final March 2024.csv"
+
+# Reading the CSV file, assuming the first column should be used as the index
+df = pd.read_csv(file_path, delimiter=';', index_col=0)
+
+# Ensure the columns match the index to represent nodes correctly
+df.columns = df.index.tolist()
+
+# Create a graph from the adjacency matrix
+G = nx.from_pandas_adjacency(df, create_using=nx.Graph())
+
+# Prepare 'world_regions' with your country-to-region mapping
+# Ensure all countries are included or they will be mapped to "Undefined"
+world_regions = {
+    "Afghanistan": "South Asia",
+    "Andorra": "Europe and Central Asia",
+    "Albania": "Europe and Central Asia",
+    "Algeria": "Middle East and North Africa",
+    "Angola": "Sub-Saharan Africa",
+    "Antigua-Barbuda": "Latin America and Caribbean",
+    "Argentina": "Latin America and Caribbean",
+    "Armenia": "Europe and Central Asia",
+    "Aruba": "Latin America and Caribbean",
+    "Australia": "East Asia and Pacific",
+    "Austria": "Europe and Central Asia",
+    "Azerbaijan": "Europe and Central Asia",
+    "Bahamas": "Latin America and Caribbean",
+    "Bahrain": "Middle East and North Africa",
+    "Bangladesh": "South Asia",
+    "Barbados": "Latin America and Caribbean",
+    "Belarus": "Europe and Central Asia",
+    "Belgium": "Europe and Central Asia",
+    "Belize": "Latin America and Caribbean",
+    "Benin": "Sub-Saharan Africa",
+    "Bhutan": "South Asia",
+    "Bolivia": "Latin America and Caribbean",
+    "Bosnia-Herzegovina": "Europe and Central Asia",
+    "Botswana": "Sub-Saharan Africa",
+    "Brazil": "Latin America and Caribbean",
+    "Bulgaria": "Europe and Central Asia",
+    "Burkina Faso": "Sub-Saharan Africa",
+    "Brunei Darussalam": "East Asia and Pacific",
+    "Burundi": "Sub-Saharan Africa",
+    "Cambodia": "East Asia and Pacific",
+    "Cameroon": "Sub-Saharan Africa",
+    "Canada": "North America",
+    "Cape Verde": "Sub-Saharan Africa",
+    "Central African Rep": "Sub-Saharan Africa",
+    "Chad": "Sub-Saharan Africa",
+    "Chile": "Latin America and Caribbean",
+    "China": "East Asia and Pacific",
+    "Colombia": "Latin America and Caribbean",
+    "Comoros": "Sub-Saharan Africa",
+    "Congo Brazzaville": "Sub-Saharan Africa",
+    "Congo DR": "Sub-Saharan Africa",
+    "Costa Rica": "Latin America and Caribbean",
+    "Cote d Ivoire": "Sub-Saharan Africa",
+    "Croatia": "Europe and Central Asia",
+    "Cuba": "Latin America and Caribbean",
+    "Curaçao": "Latin America and Caribbean",
+    "Côte d'Ivoire": "Sub-Saharan Africa",
+    "Cyprus": "Europe and Central Asia",
+    "Czechia": "Europe and Central Asia",
+    "Denmark": "Europe and Central Asia",
+    "Djibouti": "Middle East and North Africa",
+    "Dominica": "Latin America and Caribbean",
+    "Dominican Rep": "Latin America and Caribbean",
+    "Ecuador": "Latin America and Caribbean",
+    "Egypt": "Middle East and North Africa",
+    "El Salvador": "Latin America and Caribbean",
+    "Equatorial Guinea": "Sub-Saharan Africa",
+    "Eritrea": "Sub-Saharan Africa",
+    "Estonia": "Europe and Central Asia",
+    "Eswatini": "Sub-Saharan Africa",
+    "Ethiopia": "Sub-Saharan Africa",
+    "Fiji": "East Asia and Pacific",
+    "Finland": "Europe and Central Asia",
+    "France": "Europe and Central Asia",
+    "Gabon": "Sub-Saharan Africa",
+    "Gambia": "Sub-Saharan Africa",
+    "Georgia": "Europe and Central Asia",
+    "Germany": "Europe and Central Asia",
+    "Ghana": "Sub-Saharan Africa",
+    "Greece": "Europe and Central Asia",
+    "Grenada": "Latin America and Caribbean",
+    "Guatemala": "Latin America and Caribbean",
+    "Guinea": "Sub-Saharan Africa",
+    "Guinea-Bissau": "Sub-Saharan Africa",
+    "Guyana": "Latin America and Caribbean",
+    "Haiti": "Latin America and Caribbean",
+    "Honduras": "Latin America and Caribbean",
+    "Hungary": "Europe and Central Asia",
+    "Iceland": "Europe and Central Asia",
+    "India": "South Asia",
+    "Indonesia": "East Asia and Pacific",
+    "Iran": "Middle East and North Africa",
+    "Iraq": "Middle East and North Africa",
+    "Ireland": "Europe and Central Asia",
+    "Israel": "Middle East and North Africa",
+    "Italy": "Europe and Central Asia",
+    "Jamaica": "Latin America and Caribbean",
+    "Japan": "East Asia and Pacific",
+    "Jordan": "Middle East and North Africa",
+    "Kazakhstan": "Europe and Central Asia",
+    "Kenya": "Sub-Saharan Africa",
+    "Kiribati": "East Asia and Pacific",
+    "Korea Rep": "East Asia and Pacific",
+    "Kuwait": "Middle East and North Africa",
+    "Kyrgyzstan": "Europe and Central Asia",
+    "Laos": "East Asia and Pacific",
+    "Latvia": "Europe and Central Asia",
+    "Libya": "Middle East and North Africa",
+    "Lebanon": "Middle East and North Africa",
+    "Lesotho": "Sub-Saharan Africa",
+    "Liberia": "Sub-Saharan Africa",
+    "Lithuania": "Europe and Central Asia",
+    "Liechtenstein": "Europe and Central Asia",
+    "Luxembourg": "Europe and Central Asia",
+    "Madagascar": "Sub-Saharan Africa",
+    "Malawi": "Sub-Saharan Africa",
+    "Malaysia": "East Asia and Pacific",
+    "Maldives": "South Asia",
+    "Mali": "Sub-Saharan Africa",
+    "Malta": "Europe and Central Asia",
+    "Mauritania": "Sub-Saharan Africa",
+    "Mauritius": "Sub-Saharan Africa",
+    "Mexico": "Latin America and Caribbean",
+    "Micronesia FS": "East Asia and Pacific",
+    "Moldova": "Europe and Central Asia",
+    "Mongolia": "East Asia and Pacific",
+    "Montenegro": "Europe and Central Asia",
+    "Morocco": "Middle East and North Africa",
+    "Mozambique": "Sub-Saharan Africa",
+    "Myanmar": "East Asia and Pacific",
+    "Namibia": "Sub-Saharan Africa",
+    "Nauru": "East Asia and Pacific",
+    "Nepal": "South Asia",
+    "Netherlands": "Europe and Central Asia",
+    "New Zealand": "East Asia and Pacific",
+    "Nicaragua": "Latin America and Caribbean",
+    "Niger": "Sub-Saharan Africa",
+    "Nigeria": "Sub-Saharan Africa",
+    "North Macedonia": "Europe and Central Asia",
+    "Norway": "Europe and Central Asia",
+    "Oman": "Middle East and North Africa",
+    "Pakistan": "South Asia",
+    "Palau": "East Asia and Pacific",
+    "Palestine": "Middle East and North Africa",
+    "Panama": "Latin America and Caribbean",
+    "Papua New Guinea": "East Asia and Pacific",
+    "Paraguay": "Latin America and Caribbean",
+    "Peru": "Latin America and Caribbean",
+    "Philippines": "East Asia and Pacific",
+    "Poland": "Europe and Central Asia",
+    "Portugal": "Europe and Central Asia",
+    "Qatar": "Middle East and North Africa",
+    "Romania": "Europe and Central Asia",
+    "Russia": "Europe and Central Asia",
+    "Rwanda": "Sub-Saharan Africa",
+    "Sao Tome Principe": "Sub-Saharan Africa",
+    "Saudi Arabia": "Middle East and North Africa",
+    "Senegal": "Sub-Saharan Africa",
+    "Serbia": "Europe and Central Asia",
+    "Seychelles": "Sub-Saharan Africa",
+    "Sierra Leone": "Sub-Saharan Africa",
+    "Singapore": "East Asia and Pacific",
+    "Slovakia": "Europe and Central Asia",
+    "Slovenia": "Europe and Central Asia",
+    "Solomon Is": "East Asia and Pacific",
+    "Somalia": "Sub-Saharan Africa",
+    "South Africa": "Sub-Saharan Africa",
+    "Spain": "Europe and Central Asia",
+    "Sri Lanka": "South Asia",
+    "St Lucia": "Latin America and Caribbean",
+    "Sudan": "Sub-Saharan Africa",
+    "Suriname": "Latin America and Caribbean",
+    "Sweden": "Europe and Central Asia",
+    "Switzerland": "Europe and Central Asia",
+    "Syrian AR": "Middle East and North Africa",
+    "Tajikistan": "Europe and Central Asia",
+    "Taiwan": "East Asia and Pacific",
+    "Tanzania": "Sub-Saharan Africa",
+    "Thailand": "East Asia and Pacific",
+    "Timor Leste": "East Asia and Pacific",
+    "Togo": "Sub-Saharan Africa",
+    "Tonga": "East Asia and Pacific",
+    "Trinidad-Tobago": "Latin America and Caribbean",
+    "Tunisia": "Middle East and North Africa",
+    "Turkey": "Europe and Central Asia",
+    "Turkmenistan": "Europe and Central Asia",
+    "Tuvalu": "East Asia and Pacific",
+    "Uganda": "Sub-Saharan Africa",
+    "Ukraine": "Europe and Central Asia",
+    "United Arab Emirates": "Middle East and North Africa",
+    "Uruguay": "Latin America and Caribbean",
+    "USA": "North America",
+    "Uzbekistan": "Europe and Central Asia",
+    "Vanuatu": "East Asia and Pacific",
+    "Venezuela": "Latin America and Caribbean",
+    "Vietnam": "East Asia and Pacific",
+    "Yemen": "Middle East and North Africa",
+    "Zambia": "Sub-Saharan Africa",
+    "Marshall Is": "East Asia and Pacific",
+    "Timor-Leste": "East Asia and Pacific",
+    "Monaco": "Europe and Central Asia",
+    "Bermuda": "North America",
+    "St Kitts-Nevis": "Latin America and Caribbean",
+    "Sao Tomé-Principe": "Sub-Saharan Africa",
+    "South Sudan": "Sub-Saharan Africa",
+    "St Vincent-Grenadines": "Latin America and Caribbean",
+    "Kosovo": "Europe and Central Asia",
+    "San Marino": "Europe and Central Asia",
+    "Niue": "East Asia and Pacific",
+    "Cook Is": "East Asia and Pacific",
+    "Korea DPR": "East Asia and Pacific",
+    "St Maarten": "Latin America and Caribbean",
+    "Iran Islamic Rep": "Middle East and North Africa",
+    "UK": "Europe and Central Asia",
+    "Türkiye": "Europe and Central Asia",
+    "Tanzania UR": "Sub-Saharan Africa",
+    "Zimbabwe": "Sub-Saharan Africa"
+}
+
+# Define colors for each world region, including 'Undefined'
+region_colors = {
+    "South Asia": "#4169E1",  # Royal Blue
+    "Europe and Central Asia": "#DC143C",  # Crimson
+    "Middle East and North Africa": "#228B22",  # Forest Green
+    "Sub-Saharan Africa": "#DAA520",  # Goldenrod
+    "Latin America and Caribbean": "#BA55D3",  # Medium Orchid
+    "East Asia and Pacific": "#008080",  # Teal
+    "North America": "#A0522D",  # Sienna
+    "Undefined": "#808080"  # Gray for undefined regions
+}
+
+# Calculate degree centrality for each node
+centrality = nx.degree_centrality(G)
+# Scale centrality values for node size visualization (adjust the scaling factor as needed)
+node_sizes = [v * 100 for v in centrality.values()]
+
+# Assign color to each node based on its region
+node_colors = [region_colors[world_regions[node]] if node in world_regions else region_colors["Undefined"] for node in G.nodes()]
+
+# Adjusting the spring layout's parameters to optimize distances between nodes
+plt.figure(figsize=(20, 20))
+pos = nx.spring_layout(G, k=0.6/(np.sqrt(G.order())), iterations=50)
+
+# Draw nodes with sizes scaled by centrality and specified color
+nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.7)
+
+# Draw edges with thinner lines for clarity
+nx.draw_networkx_edges(G, pos, edge_color='gray', width=0.03, alpha=0.5)
+# Position labels close to nodes to minimize overlap, adjusting font size for readability
+nx.draw_networkx_labels(G, pos, font_size=6, alpha=0.9)
+
+# Adding legend for world regions
+legend_labels = list(set(world_regions.values()))
+patches = [plt.Line2D([0], [0], marker='o', color='w', label=region,
+                      markerfacecolor=color, markersize=10) for region, color in region_colors.items() if region in legend_labels]
+plt.legend(handles=patches, title="World Regions", loc='best', fontsize='small')
+
+plt.title("Network of Shared Memberships in International Environmental Organizations", fontsize=16)
+plt.axis('off')
+plt.tight_layout()
+
+# To display the plot
+plt.show()
+
+# Optionally, save the plot to a file
+plt.savefig('network_visualization_centrality.png', format='png', dpi=300, bbox_inches='tight')
+
+-------------------------
+### Running the regressions
+
+import math
+import numpy as np
+import pandas as pd
+import statistics
+import scipy.stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.formula.api import ols
+from scipy.stats import shapiro, probplot
+from statsmodels.stats.diagnostic import het_breuschpagan
+from statsmodels.stats.stattools import durbin_watson
+from statsmodels.graphics.gofplots import qqplot
+import statsmodels.api as sm
+import seaborn as sns
+import matplotlib.pyplot as plt
+import os
+from docx import Document
+from docx import Document
+from docx.shared import Inches
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.stats.diagnostic import het_breuschpagan
+import matplotlib.pyplot as plt
+from statsmodels.stats.stattools import durbin_watson
+from scipy.stats import shapiro
+
+### First check the assumptions for regression
+#Multiple regression 
+# Replace 'inf' values with 'NaN'
+df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# Drop rows with 'NaN' in any column (or consider imputation)
+df.dropna(inplace=True)
+
+# Define your dependent variable and independent variables
+dependent_var = 'Ambition'
+independent_vars = ['Embededdness score', 'GDP per capita lg', 'Democracy', "Population 2022 log"] 
+
+# Prepare the data for the model
+X = df[independent_vars]
+y = df[dependent_var]
+
+# Add a constant to the model (intercept)
+X = sm.add_constant(X)
+
+# Fit the multiple regression model
+model = sm.OLS(y, X).fit()
+
+# Print out the model's summary
+print(model.summary())
+------------------------------
+#### REAL REGRESSION
+
+# Load the dataset
+df = pd.read_excel(r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\Final Final Final datasets\FULL DATASET 25.02.xlsx")
+
+## Logarithm of variables
+df['GDP per capita lg'] = np.log(df['GDP per capita'])
+df['Population 2022 lg'] = np.log(df['Population 2022'])
+df['Ambition lg'] = np.log(df['Ambition'])
+df['GDP per capita lg'] = np.log(df['GDP per capita'])
+df['Eigenvector lg'] = np.log(df['Eigenvector'])
+df['CO2 2022 lg'] = np.log(df['CO2 2022'])
+df['EPI 2022 lg'] = np.log(df['EPI 2022'])
+df['Democracy lg'] = np.log(df['Democracy'])
+
+#Multiple regression 
+# Replace 'inf' values with 'NaN'
+df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# Drop rows with 'NaN' in any column (or consider imputation)
+df.dropna(inplace=True)
+
+# Define your dependent variable and independent variables
+dependent_var = 'Ambition'
+independent_vars = ['Embededdness score', 'GDP per capita lg', 'Democracy', "Population 2022 log"] 
+
+# Prepare the data for the model
+X = df[independent_vars]
+y = df[dependent_var]
+
+# Add a constant to the model (intercept)
+X = sm.add_constant(X)
+
+# Fit the multiple regression model
+model = sm.OLS(y, X).fit()
+
+# Print out the model's summary
+print(model.summary())
+
+
+
+------------------
+### Making scatter plots
+# MAKING THE SCATTER PLOTS
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set the style of the plot to make it more appealing
+sns.set_style("darkgrid")
+
+# Create the scatter plot with more appealing aesthetics
+plt.figure(figsize=(10, 6))  # Set the figure size
+plt.scatter(df['Embededdness score'], df['EPI 2022'], alpha=0.7, edgecolors='w', s=100)  # Assume 'df' is your DataFrame
+
+# Set the title and labels with a specified font
+title_font = {'fontname':'Georgia', 'size':'11'}
+axis_font = {'fontname':'Georgia', 'size':'11'}
+
+plt.title('Relationship between Degree of Embededdness and Environmental Performance Index', **title_font)
+plt.xlabel('Embededdness score', **axis_font)
+plt.ylabel('Environmental Performance Index', **axis_font)
+
+# Set x-axis to only show levels 1 through 5
+plt.xticks([1, 2, 3, 4, 5], **axis_font)
+
+# Optional: If you want to remove the top and right axis spines but keep the grid
+sns.despine()
+
+# Save the plot with a transparent background to the specified directory
+plt.savefig(r'C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\Archive\scatter_plot2.png', bbox_inches='tight', transparent=True)
+
+# Show the plot
+plt.show()
+
+-----------------------------
+## Making the histogramms
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+
+# Set the style of the plot to make it more appealing
+sns.set_style("darkgrid")
+
+# Create the histogram with more appealing aesthetics
+plt.figure(figsize=(10, 6))  # Set the figure size
+sns.histplot(df['Ambition'], kde=False, color=(75/255, 0/255, 130/255), bins=30)  # RGB values must be between 0 and 1 for matplotlib
+
+# Set the title and labels with a specified font
+title_font = {'fontname':'Georgia', 'size':'11'}
+axis_font = {'fontname':'Georgia', 'size':'11'}
+
+plt.title('Histogram of the Climate Ambition Index', **title_font)
+plt.xlabel('Climate Ambition Index', **axis_font)
+plt.ylabel('Frequency', **axis_font)
+
+# Optional: If you want to remove the top and right axis spines but keep the grid
+sns.despine()
+
+# Save the plot with a transparent background
+plt.savefig(r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\Archive\histogramm.png", bbox_inches='tight', transparent=True)
+
+# Show the plot
+plt.show()
+
+
+---------------------
+###Correlation matrix
+import pandas as pd
+import numpy as np
+
+# Assuming 'df' is your DataFrame
+
+# Define the list of specific variables/columns to include
+columns_of_interest = [
+    'Eigenvector',
+    'EPI 2022',
+    'GDP per capita log',
+    'Democracy',
+    'Population 2022 log',
+    'Ambition',
+    'Embededdness score'
+]
+
+# Create a subset of your DataFrame with only the specified columns
+numeric_df = df[columns_of_interest]
+
+# Calculate the correlation matrix for the subset of columns
+correlation_matrix = numeric_df.corr()
+
+# Convert the correlation matrix to a DataFrame for easier manipulation
+correlation_df = pd.DataFrame(correlation_matrix)
+
+# Reset index to turn the index into a column, useful for table conversion
+correlation_df_reset = correlation_df.reset_index()
+
+# Export the DataFrame to an Excel file
+correlation_df_reset.to_excel(r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\FINAL DATASETS\Archive\correlation.xlsx", index=False)
+
+print("Correlation matrix exported successfully.")
