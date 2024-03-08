@@ -1,1 +1,391 @@
+Annex B: Python code 
+# This code documents the code utilized and steps followed to wrangle relevant data and conduct analyses for the master’s thesis of Juan Sebastián Rico Palacios #
+EMBEDEDDNESS VARIABLE
+“””
+Extracting data Extract data from the online repository of the YIO
+“”” 0. After accessing the YIO data, select filters: Environment & conservation. Categories: type I-> A,B,C,D,F. Type II (exclude): C,D,E,J  -> Extraction led to 612 results  -> Date: 07.02.2023
+1. Data cleaning
+2. Manual selection of organizations that do work in the environmental field
+3. Transform dataset to a weighted matrix (edgelist) where the nodes are the countries and the ties are the number of shared memberships in EINGOs
+4. Create metrics & conduct analyses
+5. Create graph
+"""
+# Import packages
+import numpy as np
+import pandas as pd
+import re
+import math
+import statistics
+import scipy.stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.formula.api import ols
+from statsmodels.stats.diagnostic import het_breuschpagan
+from statsmodels.stats.stattools import durbin_watson
+from scipy.stats import shapiro, probplot
+from statsmodels.graphics.gofplots import qqplot
+import os
+from docx import Document
+from docx.shared import Inches
+import networkx as nx
+
+# Data wrangling
+url = r"C:\Users\ricoe\OneDrive\Documents\WZB\PAPER\Original Data.csv"  
+data = pd.read_csv(url)
+Headers = ["Organisation", "members", "headquarters", "all", "timestamp"]
+data.columns = Headers
+
+# Extract aims from the column "all" and create the column "aims" of the organizations
+def extract_aims(text):
+    match = re.search("Aims\n.*\.", text)
+    if match:
+        aims = match.group()
+        aims = re.sub("Aims\n", "", aims)
+        return aims
+    else:
+        return None
+data['aims'] = data['all'].apply(extract_aims)
+
+# Eliminate empty spaces in the column "organisation" 
+remove_extra_spaces = lambda x: ' '.join(x.split()) # define lambda function to eliminate extra spaces
+data['Organisation'] = data['Organisation'].apply(remove_extra_spaces) # apply lambda function to column
+# Extract member countries from the column "all" and create the column "members"
+def extract_members(text):
+    match = re.search("Member Countries.*?(?=Type)", text, re.DOTALL)
+    if match:
+        members = match.group()
+        members = re.sub("Member Countries\n", "", members)
+        members = members.strip()
+        return members
+    else:
+        return None
+data['members'] = data['all'].apply(extract_members) 
+print(data["members"])
+
+# Clean the new column "members" by replacing useless words with empty spaces
+data['members'] = data['all'].apply(extract_members)
+data['members'] = data['members'].str.replace('Member Countries & Regions', '')
+
+# Create a column to differentiate IOs from INGOs
+def contains_specific_words(text):
+    if ("Type II Classificationg: intergovernmental organization" in text) or ("Type II Classificationg" in text):
+        return 1
+    else:
+        return 0
+data['IO'] = data['all'].apply(contains_specific_words)
+
+# Move column "aims" to the second position and shift all other columns to the right
+cols = data.columns.tolist()
+cols = cols[:1] + [cols[5]] + cols[1:5] + cols[6:]
+data = data[cols]
+
+# Save to CSV
+data.to_csv("DataProcessing1", index=False)
+
+# Manually selecting all relevant organizations
+"""
+1 - Delete organizations whose aims are not related to environmental protection or fight against climate change, or that do not have membership data: 
+All those deleted case were document in the file "deleted organizations final"
+2- Clean the column memberships: 
+Deleted words such as "individuals in xxx countries" and included all countries listed, independent of whether it said "partner organizations in xxx countries" or something similar
+3 - Delete all non-sovereign countries listed:
+Anguilla, St Eustatius, Faeroe Is, Macau, Montserrat, St Helena, Gibraltar, Virgin Is USA, Samoa USA, Norfolk Is, St Maarten, Cayman Is, New Caledonia, Northern Mariana Is, Virgin Is UK  Neth Antilles (dissolved!)
+4- Replace all cities listed with the countries’ name, e.g.:
+Aguadilla & Mayagüez: Puerto Rico
+Dar es Salaam: Tanzania
+5- Save document 
+“””
+# Create matrix for the network analysis
+# Before that: delete double listings of the same country in a specific space: 
+def remove_duplicates(row): # Define a function to remove repeated words within a string
+    words = row.split(', ')
+    return ', '.join(sorted(set(words), key=words.index))
+df['members'] = df['members'].apply(remove_duplicates) # Apply the function to the members column
+# Create matrix
+from itertools import combinations
+countries = set(df['members'].str.split(', ').sum())
+matrix = pd.DataFrame(0, index=countries, columns=countries)
+
+# Count the occurrences of each pair of countries
+for row in df['members']:
+    for a, b in combinations(row.split(', '), 2):
+        matrix.loc[a, b] += 1
+        matrix.loc[b, a] += 1
+dd = pd.DataFrame(matrix)
+# save dataframe as a csv file
+dd.to_csv('mydata.csv', index=True)
+
+
+# Make a network out of the matrix and kick start analysis
+# This procedure takes the matrix file and makes a network out of it
+# Step 1: Load the data and create an undirected network
+file_path = “FILE PATH”
+df = pd.read_csv(file_path, sep=';')
+node_names = df.columns[1:].tolist()
+weighted_matrix = df.iloc[:, 1:].to_numpy()
+
+G = nx.Graph()
+for i, node in enumerate(node_names):
+    for j in range(i+1, len(node_names)):
+        weight = weighted_matrix[i, j]
+        if weight != 0:
+            G.add_edge(node_names[i], node_names[j], weight=weight)
+
+# Step 2: Print network metrics
+num_nodes = G.number_of_nodes()
+num_edges = G.number_of_edges()
+density = nx.density(G)
+avg_clustering_coef = nx.average_clustering(G)
+avg_shortest_path_len = nx.average_shortest_path_length(G) if nx.is_connected(G) else "N/A (Graph is not connected)"
+
+print(f"Number of nodes: {num_nodes}")
+print(f"Number of edges: {num_edges} ")
+print(f"Network density: {density} ")
+print(f"Average clustering coefficient: {avg_clustering_coef} ")
+print(f"Average shortest path length: {avg_shortest_path_len} ")
+
+# Step 3: Calculate individual centrality measures
+centrality_measures = {
+    'Node': node_names,
+    'Degree Centrality': [nx.degree_centrality(G)[node] for node in node_names],
+    'Closeness Centrality': [nx.closeness_centrality(G)[node] for node in node_names],
+    'Betweenness Centrality': [nx.betweenness_centrality(G)[node] for node in node_names],
+    'Eigenvector Centrality': [nx.eigenvector_centrality(G, max_iter=1000)[node] for node in node_names],
+    'Clustering Coefficient': [nx.clustering(G)[node] for node in node_names]
+}
+# Step 4: Save the centrality measures to a CSV file
+output_file_path = “FILE PATH”
+centrality_df = pd.DataFrame(centrality_measures)
+centrality_df.to_csv(output_file_path, index=False)
+
+# Calculate correlation matrix to identify patterns in shared memberships
+correlation_matrix = df.corr()
+
+# Export the correlation matrix to a CSV file
+correlation_matrix.to_csv(“FILE PATH")
+
+# Calculate network graphics and print preliminary network graphics
+with open(“File path”) as f:
+    reader = csv.reader(f)
+    node_names = next(reader)[1:]  # extract the node names from the first row
+    weighted_matrix = np.array([[float(x) for x in row[1:]] for row in reader])
+
+# Create the graph (network)
+G = nx.Graph()
+
+# Add nodes to the graph
+num_nodes = len(node_names)
+G.add_nodes_from(node_names)
+# Add weighted edges to the graph
+for i in range(num_nodes):
+    for j in range(num_nodes):
+        weight = weighted_matrix[i][j]
+        if weight != 0:
+            G.add_edge(node_names[i], node_names[j], weight=weight)
+
+# Compute node centrality
+centrality = nx.degree_centrality(G)
+
+# Filter extreme outliers
+threshold = 0.1  
+filtered_nodes = [node for node, centrality_value in centrality.items() if centrality_value > threshold]
+G_filtered = G.subgraph(filtered_nodes)
+
+# Compute node sizes based on centrality
+node_sizes = [centrality[node] * 2000 for node in G_filtered.nodes()]
+
+# Visualize the network
+pos = nx.spring_layout(G_filtered, seed=42)  # spring layout was chosen as the most fitting layout
+plt.figure(figsize=(40, 40))  # adjust the figure size
+nx.draw_networkx(G_filtered, pos=pos, with_labels=True, node_color=node_colors, edge_color='gray', alpha=0.8,
+                 node_size=node_sizes, font_size=8, font_color='black', font_weight='bold')
+# Process repeated multiple times changing the parameters 
+
+# Creating exportable network graphs (this one exemplary for the world regions graphic)
+
+file_path = "File path"
+df = pd.read_csv(file_path, delimiter=';', index_col=0)
+df.columns = df.index.tolist()
+# Create a graph from the adjacency matrix
+G = nx.from_pandas_adjacency(df, create_using=nx.Graph())
+world_regions = { # Here a dictionary for each region/country was created, e.g.:
+    "Afghanistan": "South Asia",
+    "Andorra": "Europe and Central Asia", # etcetera 
+}
+# Define colors for each world region
+region_colors = {
+    "South Asia": "#4169E1",  
+    "Europe and Central Asia": "#DC143C",  # Crimson
+    "Middle East and North Africa": "#228B22",  # Forest Green
+    "Sub-Saharan Africa": "#DAA520",  # Goldenrod
+    "Latin America and Caribbean": "#BA55D3",  # Medium Orchid
+    "East Asia and Pacific": "#008080",  # Teal
+    "North America": "#A0522D",  # Sienna
+}
+
+# Calculate degree centrality for each node
+centrality = nx.degree_centrality(G)
+# Scale centrality values for node size visualization
+node_sizes = [v * 100 for v in centrality.values()]
+
+# Assign color to each node based on its region
+node_colors = [region_colors[world_regions[node]] if node in world_regions else region_colors["Undefined"] for node in G.nodes()]
+
+# Adjusting the spring layout's parameters to optimize distances between nodes
+plt.figure(figsize=(20, 20))
+pos = nx.spring_layout(G, k=0.6/(np.sqrt(G.order())), iterations=50)
+
+# Draw nodes with sizes scaled by centrality and specified color
+nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.7)
+
+# Draw edges with thinner lines for clarity
+nx.draw_networkx_edges(G, pos, edge_color='gray', width=0.03, alpha=0.5)
+# Position labels close to node, adjust font size for readability
+nx.draw_networkx_labels(G, pos, font_size=6, alpha=0.9)
+
+# Adding legend for world regions
+legend_labels = list(set(world_regions.values()))
+patches = [plt.Line2D([0], [0], marker='o', color='w', label=region,
+                      markerfacecolor=color, markersize=10) for region, color in region_colors.items() if region in legend_labels]
+plt.legend(handles=patches, title="World Regions", loc='best', fontsize='small')
+plt.axis('off')
+plt.tight_layout()
+# Save
+plt.savefig(“File path”, format='png', dpi=300, bbox_inches='tight')
+
+
+CLIMATE AMBITION INDEX VARIABLE
+# Create csv with all values to be considered for the climate ambition score (extracted from Netzerotracker)
+file_path = “File path"
+df = pd.read_csv(file_path)
+
+# Function to calculate the 'endgoal' component of the index
+def calculate_endgoal(row):
+    return (row['end_target'] * 0.30 + row['end_target_year'] * 0.30 + row['end_target_status'] * 0.40) * 0.40
+
+# Function to calculate the 'interim' component of the index
+def calculate_interim(row):
+    return (row['interim_target'] * 0.40 + row['interim_target_percentage_reduction'] * 0.60) * 0.40
+
+# Calculate the 'endgoal' component for all rows
+df['endgoal'] = df.apply(calculate_endgoal, axis=1)
+
+# Calculate the 'interim' component for all rows
+df['interim'] = df.apply(calculate_interim, axis=1)
+
+# Calculate the 'transparency' component for all rows
+df['transparency'] = df['reporting_mechanism'] * 0.20
+
+# Sum the components to get the final climate ambition index
+df['climate_ambition_index'] = df['endgoal'] + df['interim'] + df['transparency']
+
+# Normalize the climate ambition index
+min_score = df['climate_ambition_index'].min()
+max_score = df['climate_ambition_index'].max()
+df['normalized_climate_ambition_index'] = (df['climate_ambition_index'] - min_score) / (max_score - min_score)
+
+# Save the file
+output_file_path = “File path"
+df.to_csv(output_file_path, index=False)
+
+INFERENTIAL ANALYSES
+# Create correlation matrix between al variables
+df=”File Path”
+columns_of_interest = [
+    'Eigenvector',
+    'EPI 2022',
+    'GDP per capita log',
+    'Democracy',
+    'Population 2022 log',
+    'Ambition',
+    'Embededdness score'
+]
+numeric_df = df[columns_of_interest]
+correlation_matrix = numeric_df.corr()
+correlation_df = pd.DataFrame(correlation_matrix)
+correlation_df_reset = correlation_df.reset_index()
+# Export 
+correlation_df_reset.to_excel(r"File path”, index=False)
+
+# Checking the assumptions for regression
+#Multiple regression 
+# Replace 'inf' values with 'NaN'
+df.replace([np.inf, -np.inf], np.nan, inplace=True)
+# Drop rows with 'NaN' in any column 
+df.dropna(inplace=True)
+
+# Define dependent variable and independent variables
+dependent_var = 'Ambition' # change from ambition to EPI 2022 depending on the interest
+independent_vars = ['Embededdness score', 'GDP per capita lg', 'Democracy', "Population 2022 log"] 
+# Prepare the data for the model
+X = df[independent_vars]
+y = df[dependent_var]
+
+# Add a constant to the model (intercept)
+X = sm.add_constant(X)
+
+# Fit the multiple regression model
+model = sm.OLS(y, X).fit()
+
+# Print out the model's summary
+print(model.summary())
+
+# Running (exportable) regressions
+# Load the dataset
+df = pd.read_excel(“File path")
+
+## Creating logarithm of variables
+df['GDP per capita lg'] = np.log(df['GDP per capita'])
+df['Population 2022 lg'] = np.log(df['Population 2022'])
+df['Ambition lg'] = np.log(df['Ambition'])
+df['GDP per capita lg'] = np.log(df['GDP per capita'])
+df['Eigenvector lg'] = np.log(df['Eigenvector'])
+df['CO2 2022 lg'] = np.log(df['CO2 2022'])
+df['EPI 2022 lg'] = np.log(df['EPI 2022'])
+df['Democracy lg'] = np.log(df['Democracy'])
+
+# Multiple regression 
+# Replace 'inf' values with 'NaN'
+df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# Drop rows with 'NaN' in any column (or consider imputation)
+df.dropna(inplace=True)
+
+# Define your dependent variable and independent variables
+dependent_var = 'Ambition'
+independent_vars = ['Embededdness score', 'GDP per capita lg', 'Democracy', "Population 2022 log"] 
+
+# Prepare the data for the model
+X = df[independent_vars]
+y = df[dependent_var]
+
+# Add a constant to the model (intercept)
+X = sm.add_constant(X)
+
+# Fit the multiple regression model
+model = sm.OLS(y, X).fit()
+
+# Print out the model's summary
+print(model.summary())
+
+# Creating the histograms 
+sns.set_style("darkgrid")
+
+# Create the histogram 
+plt.figure(figsize=(10, 6))  # Set the figure size
+sns.histplot(df['Ambition'], kde=False, color=(75/255, 0/255, 130/255), bins=30)
+
+# Set the title and labels with a specified font
+title_font = {'fontname':'Georgia', 'size':'11'}
+axis_font = {'fontname':'Georgia', 'size':'11'}
+plt.title('Histogram of the Climate Ambition Index', **title_font)
+plt.xlabel('Climate Ambition Index', **axis_font)
+plt.ylabel('Frequency', **axis_font)
+
+# Save the plot with a transparent background
+plt.savefig(“Path file", bbox_inches='tight', transparent=True)
+
+
 
